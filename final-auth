@@ -1,0 +1,65 @@
+import React from 'react';
+import { render } from '@testing-library/react';
+import { initialUserState } from 'src/core/context/user-store/user-reducer';
+import { AuthGuard } from 'src/components/AuthGuard';
+import { navigate } from 'gatsby';
+import {UserStore,UserContext} from 'src/core/context/user-store/user-store';
+
+const AuthGuardChildrenMockComponent = () => <div data-testid="authguard-component-test-id">DummyMockComponent</div>
+describe('AuthGuard',() => {
+    it('should render null if provided  children but loggedIn is NULL',() => {
+        const initialContext: UserContext = {
+            state:initialUserState,
+            setUserId: jest.fn(),
+            setJwtData: jest.fn(),
+            refreshJwt: jest.fn(),
+            signOut: jest.fn(),
+            setUserDetails: jest.fn(),
+          };
+        const {queryByTestId} = render(
+              <UserStore.Provider value={initialContext}>
+                    <AuthGuard redirectUrl='/fromdummy'><AuthGuardChildrenMockComponent/></AuthGuard>
+              </UserStore.Provider>
+              )
+        expect(queryByTestId('dummmy-component-test-id')).toEqual(null);
+
+    })
+
+    it('should render children if provided children and loggedIn is true',() => {
+        const state = Object.assign({},initialUserState,{'loggedIn':true})
+        const initialContext: UserContext = {
+            state,
+            setUserId: jest.fn(),
+            setJwtData: jest.fn(),
+            refreshJwt: jest.fn(),
+            signOut: jest.fn(),
+            setUserDetails: jest.fn(),
+          };
+        const {queryByTestId} = render(
+              <UserStore.Provider value={initialContext}>
+                    <AuthGuard redirectUrl='/from-authguard-dummy-route'><AuthGuardChildrenMockComponent/></AuthGuard>
+              </UserStore.Provider>
+              )
+        expect(queryByTestId('dummmy-component-test-id')).toBeInTheDocument();
+        expect(navigate).not.toHaveBeenCalled();
+    })
+
+    it('should redirect to  sign in component if provided children but loggedIn is false',() => {
+        const state = Object.assign({},initialUserState,{'loggedIn':false})
+        const initialContext: UserContext = {
+            state,
+            setUserId: jest.fn(),
+            setJwtData: jest.fn(),
+            refreshJwt: jest.fn(),
+            signOut: jest.fn(),
+            setUserDetails: jest.fn(),
+          };
+        const {queryByTestId} = render(
+              <UserStore.Provider value={initialContext}>
+                    <AuthGuard redirectUrl='/from-authguard-dummy-route'><AuthGuardChildrenMockComponent/></AuthGuard>
+              </UserStore.Provider>
+              )
+        expect(queryByTestId('dummmy-component-test-id')).not.toBeInTheDocument();
+        expect(navigate).toHaveBeenCalled();
+    })
+})

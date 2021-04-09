@@ -1,0 +1,60 @@
+import React from 'react';
+import { render, screen } from '@testing-library/react';
+import { navigate } from 'gatsby';
+
+import { UserStore } from 'src/core/context/user-store/user-store';
+import { AuthGuard } from 'src/components/AuthGuard';
+import { initialUserStoreContext } from './unit/mocks/userStorageContextMock';
+
+const AuthGuardChildrenMockComponent = () => (
+  <div data-testid='authguard-component-test-id'>DummyMockComponent</div>
+);
+describe('AuthGuard', () => {
+  it('should render null if a child component is present but loggedIn is NULL', () => {
+    render(
+      <UserStore.Provider value={initialUserStoreContext}>
+        <AuthGuard redirectUrl='/fromdummy'>
+          <AuthGuardChildrenMockComponent />
+        </AuthGuard>
+      </UserStore.Provider>,
+    );
+    expect(screen.queryByTestId('authguard-component-test-id')).toBeNull();
+  });
+
+  it('should render child component if a child component is present and loggedIn is true', () => {
+    const storeValue = Object.assign({}, initialUserStoreContext, {
+      state: {
+        ...initialUserStoreContext.state,
+        loggedIn: true,
+      },
+    });
+
+    render(
+      <UserStore.Provider value={storeValue}>
+        <AuthGuard redirectUrl='/from-authguard-dummy-route'>
+          <AuthGuardChildrenMockComponent />
+        </AuthGuard>
+      </UserStore.Provider>,
+    );
+    expect(screen.queryByTestId('authguard-component-test-id')).toBeInTheDocument();
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('redirect to sign-in component if a child component is present, but loggedIn is false', () => {
+    const storeValue = Object.assign({}, initialUserStoreContext, {
+      state: {
+        ...initialUserStoreContext.state,
+        loggedIn: false,
+      },
+    });
+    render(
+      <UserStore.Provider value={storeValue}>
+        <AuthGuard redirectUrl='/from-authguard-dummy-route'>
+          <AuthGuardChildrenMockComponent />
+        </AuthGuard>
+      </UserStore.Provider>,
+    );
+    expect(screen.queryByTestId('authguard-component-test-id')).not.toBeInTheDocument();
+    expect(navigate).toHaveBeenCalled();
+  });
+});
